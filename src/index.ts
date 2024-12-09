@@ -75,10 +75,14 @@ async function main() {
         const saldo = calcularSaldo(agencia, numeroConta);
         console.log(`${conta.nomeCliente}, o saldo da sua conta é de ${saldo}`);
         break;
-      case 2 :
-        const valorDeposito = await scanner.questionFloat("Informe o valor a ser depositado: ");
+      case 2:
+        const valorDeposito = await scanner.questionFloat(
+          "Informe o valor a ser depositado: "
+        );
         efetuarDeposito(agencia, numeroConta, valorDeposito);
-        default:
+        break;
+
+      default:
         console.log("Operação inválida");
         break;
     }
@@ -160,27 +164,30 @@ function calcularSaldo(agencia: number, numeroConta: number) {
   return saldo;
 }
 
-function efetuarDeposito(agencia:number, numeroConta:number, valorDeposito:number){
+function efetuarDeposito(
+  agencia: number,
+  numeroConta: number,
+  valorDeposito: number
+) {
   // buscar a conta (entidade)
   // atualizar o saldo na conta (entidade)
   for (let conta of contas) {
-    if (conta.agencia === agencia && conta.numero === numeroConta){
-      conta.saldo += valorDeposito
-      break
+    if (conta.agencia === agencia && conta.numero === numeroConta) {
+      conta.saldo += valorDeposito;
+      break;
     }
   }
+  // cria uma transacao de entrada
+  const transacao: Transacao = {
+    id: randomUUID(),
+    valor: valorDeposito,
+    numeroConta: numeroConta,
+    agencia: agencia,
+    tipo: "C",
+    operacao: "DEP",
+  };
+  transacoes.push(transacao);
 }
-
-// criar uma transacao de entrada
-const transacao: Transacao = {
-  id: randomUUID,
-  valor: valorDeposito,
-  numeroConta: numeroConta,
-  agencia: agencia,
-  tipo: "C",
-  operacao: "DEP",
-}
-transacoes.push(transacao);
 
 // Executa o programa
 (async () => {
