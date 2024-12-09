@@ -81,7 +81,12 @@ async function main() {
         );
         efetuarDeposito(agencia, numeroConta, valorDeposito);
         break;
-
+      case 3:
+        const valorSaque = await scanner.questionFloat(
+          "Informe o valor a ser sacado: "
+        );
+        efetuarSaque(agencia, numeroConta, valorSaque);
+        break;
       default:
         console.log("Operação inválida");
         break;
@@ -185,6 +190,36 @@ function efetuarDeposito(
     agencia: agencia,
     tipo: "C",
     operacao: "DEP",
+  };
+  transacoes.push(transacao);
+}
+
+function efetuarSaque(
+  agencia: number,
+  numeroConta: number,
+  valorSaque: number
+) {
+  // validar se a conta possui saldo disponível
+  const saldoConta = calcularSaldo(agencia, numeroConta);
+  if (saldoConta < valorSaque) {
+    console.log(`Saldo insuficiente: R$ ${saldoConta.toFixed(2)}`);
+    return;
+  }
+  // atualizar o saldo na conta
+  for (let conta of contas) {
+    if (conta.agencia === agencia && conta.numero === numeroConta) {
+      conta.saldo -= valorSaque;
+      break;
+    }
+  }
+  // criar a transação de débito da conta
+  const transacao: Transacao = {
+    id: randomUUID(),
+    valor: valorSaque,
+    numeroConta: numeroConta,
+    agencia: agencia,
+    tipo: "D",
+    operacao: "SAQ",
   };
   transacoes.push(transacao);
 }
