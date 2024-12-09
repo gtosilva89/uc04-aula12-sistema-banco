@@ -1,8 +1,3 @@
-# TypeScript Template
-
-Pacotes instalados:
-
-```json
   ...
   "devDependencies": {
     "@types/node": "^22.10.1",
@@ -14,4 +9,3 @@ Pacotes instalados:
     "@codeea/scanner": "^1.0.2"
   }
   ...
-```
