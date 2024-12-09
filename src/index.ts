@@ -13,8 +13,6 @@
 import { randomUUID } from "node:crypto";
 import Scanner from "@codeea/scanner";
 
-let scanner: Scanner;
-
 type Conta = {
   nomeCliente: string;
   numero: number;
@@ -31,44 +29,60 @@ type Transacao = {
   operacao: TipoOperacao;
 };
 
-type TipoTransacao = "E" | "S";
+type TipoTransacao = "C" | "D";
 
 type TipoOperacao = "SAQ" | "DEP" | "TRANSF" | "PIX";
 
+// Inicializo as minhas variáveis globais
+let scanner: Scanner;
 const contas: Conta[] = [];
 const transacoes: Transacao[] = [];
 
 async function main() {
+  // TODO - Validar pelo menos 3 vezes quando estiver incorretos os dados
   const agencia = parseInt(
     await scanner.question("Informe o número da agência: ")
   );
   const numeroConta = parseInt(
     await scanner.question("Informe o número da conta: ")
   );
-  let conta = localizaConta(agencia, numeroConta);
+  let conta = localizarConta(agencia, numeroConta);
   let operacao = 0;
 
+  // Clausula Guarda
   if (!conta) {
     console.log("Conta não encontrada!");
-  } else {
-    imprimeMenu();
-    operacao = parseInt(await scanner.question("Informe a operação: "));
+    return;
   }
 
-  while (true) {
-    if (operacao === 0) {
-      console.log("Obrigado por utilizar nossos serviços!\nVolte Sempre!");
-      break;
-    }
+  let continuarOperacoes = true;
+  do {
+    imprimeMenu();
+    operacao = parseInt(await scanner.question("Informe a operação: "));
 
     // OPERACOES
     // 1 - SALDO
     // 2 - DEPOSITO
     // 3 - SAQUE
     // 4 - EXTRATO
-    imprimeMenu();
-    operacao = parseInt(await scanner.question("Informe a operação: "));
-  }
+
+    switch (operacao) {
+      case 0:
+        console.log("Obrigado por utilizar nossos serviços!\nVolte Sempre!");
+        continuarOperacoes = false;
+        break;
+      case 1:
+        const saldo = calcularSaldo(agencia, numeroConta);
+        console.log(`${conta.nomeCliente}, o saldo da sua conta é de ${saldo}`);
+        break;
+      case 2 :
+        const valorDeposito = await scanner.questionFloat("Informe o valor a ser depositado: ");
+        efetuarDeposito(agencia, numeroConta, valorDeposito);
+        default:
+        console.log("Operação inválida");
+        break;
+    }
+  } while (continuarOperacoes);
 }
 
 function imprimeMenu() {
@@ -95,13 +109,13 @@ function inicializarBanco() {
     valor: 100,
     numeroConta: conta.numero,
     agencia: conta.agencia,
-    tipo: "E",
+    tipo: "C",
     operacao: "DEP",
   };
   transacoes.push(transacao);
 }
 
-function localizaConta(agencia: number, numeroConta: number) {
+function localizarConta(agencia: number, numeroConta: number) {
   for (let conta of contas) {
     if (conta.agencia === agencia && conta.numero === numeroConta) {
       return conta;
@@ -109,6 +123,66 @@ function localizaConta(agencia: number, numeroConta: number) {
   }
 }
 
+function calcularSaldo(agencia: number, numeroConta: number) {
+  // filtrar apenas as transacoes da conta
+  let transacoesConta: Transacao[] = [];
+  // for (let transacao of transacoes) {
+  //   if (
+  //     transacao.agencia === agencia &&
+  //     transacao.numeroConta === numeroConta
+  //   ) {
+  //     transacoesConta.push(transacao);
+  //   }
+  // }
+
+  transacoesConta = transacoes.filter(
+    (transacao) =>
+      transacao.agencia === agencia && transacao.numeroConta === numeroConta
+  );
+
+  if (transacoesConta.length === 0) {
+    return 0;
+  }
+
+  // calcular os valores baseados no tipo de transacao
+  let saldo = 0;
+
+  for (const transacao of transacoesConta) {
+    // C - CRÉDITO (SOMA NO TOTAL)
+    // D - DÉBITO (SUBTRAI DO TOTAL)
+    if (transacao.tipo === "C") {
+      saldo += transacao.valor;
+    } else {
+      // SEMPRE SERÁ D
+      saldo -= transacao.valor;
+    }
+  }
+  return saldo;
+}
+
+function efetuarDeposito(agencia:number, numeroConta:number, valorDeposito:number){
+  // buscar a conta (entidade)
+  // atualizar o saldo na conta (entidade)
+  for (let conta of contas) {
+    if (conta.agencia === agencia && conta.numero === numeroConta){
+      conta.saldo += valorDeposito
+      break
+    }
+  }
+}
+
+// criar uma transacao de entrada
+const transacao: Transacao = {
+  id: randomUUID,
+  valor: valorDeposito,
+  numeroConta: numeroConta,
+  agencia: agencia,
+  tipo: "C",
+  operacao: "DEP",
+}
+transacoes.push(transacao);
+
+// Executa o programa
 (async () => {
   scanner = new Scanner();
   inicializarBanco();
