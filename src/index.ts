@@ -170,6 +170,10 @@ function efetuarDeposito(
   numeroConta: number,
   valorDeposito: number
 ) {
+  if (valorDeposito <= 0){
+    console.log("Não é possível depositar o valor informado");
+    return;
+  }
   // buscar a conta (entidade)
   // atualizar o saldo na conta (entidade)
   for (let conta of contas) {
@@ -199,6 +203,9 @@ function efetuarSaque(
   const saldoConta = calcularSaldo(agencia, numeroConta);
   if (saldoConta < valorSaque) {
     console.log(`Saldo insuficiente: R$ ${saldoConta.toFixed(2)}`);
+    return;
+  } else if (valorSaque <= 0){
+    console.log("Não é possível efetuar saque do valor informado!");
     return;
   }
   // atualizar o saldo na conta
