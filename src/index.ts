@@ -87,6 +87,9 @@ async function main() {
         );
         efetuarSaque(agencia, numeroConta, valorSaque);
         break;
+      case 4:
+        imprimirExtrato(agencia, numeroConta);
+        break;
       default:
         console.log("Operação inválida");
         break;
@@ -107,7 +110,7 @@ function imprimeMenu() {
 
 function inicializarBanco() {
   const conta: Conta = {
-    nomeCliente: "Cezar Augusto Mezzalira",
+    nomeCliente: "Gustavo Silveira Silva",
     numero: 1234,
     agencia: 1,
     saldo: 100,
@@ -132,23 +135,16 @@ function localizarConta(agencia: number, numeroConta: number) {
   }
 }
 
-function calcularSaldo(agencia: number, numeroConta: number) {
-  // filtrar apenas as transacoes da conta
-  let transacoesConta: Transacao[] = [];
-  // for (let transacao of transacoes) {
-  //   if (
-  //     transacao.agencia === agencia &&
-  //     transacao.numeroConta === numeroConta
-  //   ) {
-  //     transacoesConta.push(transacao);
-  //   }
-  // }
-
-  transacoesConta = transacoes.filter(
+function buscarTransacoesConta(agencia: number, numeroConta: number) {
+  const transacoesConta = transacoes.filter(
     (transacao) =>
       transacao.agencia === agencia && transacao.numeroConta === numeroConta
   );
+  return transacoesConta;
+}
 
+function calcularSaldo(agencia: number, numeroConta: number) {
+  const transacoesConta = buscarTransacoesConta(agencia, numeroConta);
   if (transacoesConta.length === 0) {
     return 0;
   }
@@ -222,6 +218,27 @@ function efetuarSaque(
     operacao: "SAQ",
   };
   transacoes.push(transacao);
+}
+
+function imprimirExtrato(agencia: number, numeroConta: number) {
+  const transacoesConta = buscarTransacoesConta(agencia, numeroConta);
+  console.log(`Extrato de transações da conta ${agencia}/${numeroConta}`);
+  let saldo = 0;
+  for (const transacao of transacoesConta) {
+    // const valorTransacao =
+    //   transacao.tipo === "C" ? transacao.valor : transacao.valor * -1;
+    let valorTransacao = transacao.valor;
+    if (transacao.tipo === "D") {
+      valorTransacao = transacao.valor * -1;
+    }
+    saldo += valorTransacao;
+    console.log(
+      `${transacao.operacao} -> R$ ${valorTransacao.toFixed(2)} - ${
+        transacao.tipo
+      }`
+    );
+  }
+  console.log(`O saldo da conta é de R$ ${saldo.toFixed(0)}`)
 }
 
 // Executa o programa
