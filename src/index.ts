@@ -199,13 +199,14 @@ function efetuarSaque(
   numeroConta: number,
   valorSaque: number
 ) {
+  if (valorSaque <= 0){
+  console.log("Não é possível efetuar saque do valor informado!");
+  return;
+}
   // validar se a conta possui saldo disponível
   const saldoConta = calcularSaldo(agencia, numeroConta);
   if (saldoConta < valorSaque) {
     console.log(`Saldo insuficiente: R$ ${saldoConta.toFixed(2)}`);
-    return;
-  } else if (valorSaque <= 0){
-    console.log("Não é possível efetuar saque do valor informado!");
     return;
   }
   // atualizar o saldo na conta
