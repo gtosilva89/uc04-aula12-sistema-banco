@@ -12,8 +12,8 @@
 
 import { randomUUID } from "node:crypto";
 import Scanner from "@codeea/scanner";
-import fs from "node:fs/promises";
 
+import fs from "node:fs/promises";
 
 type Conta = {
   nomeCliente: string;
@@ -67,7 +67,6 @@ async function main() {
     // 2 - DEPOSITO
     // 3 - SAQUE
     // 4 - EXTRATO
-    // 5 - EXTRATO CSV
 
     switch (operacao) {
       case 0:
@@ -94,7 +93,10 @@ async function main() {
         imprimirExtrato(agencia, numeroConta);
         break;
       case 5:
-        await exportarExtrato(agencia, numeroConta);
+        const nomeArquivo = await scanner.question(
+          "Informe o nome do arquivo: "
+        );
+        await salvarExtrato(agencia, numeroConta, nomeArquivo);
         break;
       default:
         console.log("Operação inválida");
@@ -109,7 +111,7 @@ function imprimeMenu() {
     2 - DEPÓSITAR
     3 - SACAR
     4 - EXTRATO
-    5 - EXTRATO CSV
+    5 - EXPORTAR EXTRATO EM CSV
     0 - SAIR
   `;
   console.log(menu);
@@ -117,7 +119,7 @@ function imprimeMenu() {
 
 function inicializarBanco() {
   const conta: Conta = {
-    nomeCliente: "Gustavo Silveira Silva",
+    nomeCliente: "Cezar Augusto Mezzalira",
     numero: 1234,
     agencia: 1,
     saldo: 100,
@@ -177,8 +179,10 @@ function efetuarDeposito(
   numeroConta: number,
   valorDeposito: number
 ) {
-  if (valorDeposito <= 0){
-    console.log("Não é possível depositar o valor informado");
+  if (valorDeposito <= 0) {
+    console.log(
+      `Valor inválido para deposito - R$ ${valorDeposito.toFixed(2)}`
+    );
     return;
   }
   // buscar a conta (entidade)
@@ -206,10 +210,10 @@ function efetuarSaque(
   numeroConta: number,
   valorSaque: number
 ) {
-  if (valorSaque <= 0){
-  console.log("Não é possível efetuar saque do valor informado!");
-  return;
-}
+  if (valorSaque <= 0) {
+    console.log(`Valor inválido para saque - R$ ${valorSaque.toFixed(2)}`);
+    return;
+  }
   // validar se a conta possui saldo disponível
   const saldoConta = calcularSaldo(agencia, numeroConta);
   if (saldoConta < valorSaque) {
@@ -253,32 +257,34 @@ function imprimirExtrato(agencia: number, numeroConta: number) {
       }`
     );
   }
-  console.log(`O saldo da conta é de R$ ${saldo.toFixed(0)}`)
+  console.log(`O saldo da conta é de R$ ${saldo.toFixed(0)}`);
 }
 
-async function exportarExtrato(agencia: number, numeroConta: number) {
-  const transacoesConta = transacoes.filter(
-    (transacao) => transacao.agencia === agencia && transacao.numeroConta === numeroConta
-  );
+async function salvarExtrato(
+  agencia: number,
+  numeroConta: number,
+  nomeArquivo: string
+) {
+  const transacoesConta = buscarTransacoesConta(agencia, numeroConta);
+  console.log(`Extrato de transações da conta ${agencia}/${numeroConta}`);
+  let saldo = 0;
+  let fileLines = "id,tipo,operacao,valor";
 
-  const filePath = "./public/extrato.csv";
-  let csvContent = "Operação,Valor (R$),Tipo\n"; // Cabeçalho CSV
-
-  // Adiciona cada transação ao CSV
   for (const transacao of transacoesConta) {
+    // const valorTransacao =
+    //   transacao.tipo === "C" ? transacao.valor : transacao.valor * -1;
     let valorTransacao = transacao.valor;
     if (transacao.tipo === "D") {
       valorTransacao = transacao.valor * -1;
     }
-    csvContent += `${transacao.operacao},${valorTransacao.toFixed(2)},${transacao.tipo === "C" ? "Crédito" : "Débito"}\n`;
+    saldo += valorTransacao;
+    fileLines += `\n${transacao.id},${transacao.tipo},${
+      transacao.operacao
+    },${valorTransacao.toFixed(2)}`;
   }
 
-  try {
-    await fs.appendFile(filePath, csvContent);
-    console.log("Extrato exportado com sucesso para:", filePath);
-  } catch (error) {
-    console.error("Erro ao exportar extrato:", error);
-  }
+  await fs.appendFile(`./public/${nomeArquivo || "arquivo"}.csv`, fileLines);
+  console.log(`O saldo da conta é de R$ ${saldo.toFixed(0)}`);
 }
 
 // Executa o programa
